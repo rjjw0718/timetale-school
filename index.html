@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트 에듀컴시간 | 중학교 교무행정 & 스마트 시간표 시스템</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Google Fonts: Pre-load Noto Sans KR for clean Korean typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app" class="app-layout">
+    <!-- Top Global Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-group">
+          <div class="logo-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+              <path d="M6 6h10"></path>
+              <path d="M6 10h10"></path>
+              <path d="M9 16l2 2 4-4"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="service-title">스마트 에듀컴시간 <span class="badge badge-accent">Admin Pro</span></h1>
+            <p class="service-subtitle">컴시간 알리미 연동 중학교 종합 교무 행정 시스템</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="school-selector-chip" id="schoolInfoBadge">
+          <span class="status-dot live"></span>
+          <span class="school-name" id="currentSchoolName">서울누리중학교</span>
+          <span class="divider">|</span>
+          <span class="semester-tag">2026학년도 2학기</span>
+          <button class="btn-icon-subtle" id="openSyncModalBtn" title="컴시간 데이터 동기화 설정">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="quick-stats">
+          <div class="stat-pill">
+            <span class="stat-label">등록교사</span>
+            <span class="stat-value" id="headerTeacherCount">28명</span>
+          </div>
+          <div class="stat-pill warning">
+            <span class="stat-label">오늘 결보강</span>
+            <span class="stat-value" id="headerSubCount">2건 대기</span>
+          </div>
+          <div class="stat-pill info">
+            <span class="stat-label">시험 모드</span>
+            <span class="stat-value" id="headerExamStatus">준비중</span>
+          </div>
+        </div>
+        <div class="current-clock" id="currentLiveClock">10:40:00 (화)</div>
+      </div>
+    </header>
+
+    <!-- Main Navigation Bar -->
+    <nav class="main-nav">
+      <div class="nav-tabs-container">
+        <button class="nav-tab active" data-tab="timetable">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+            <line x1="10" y1="4" x2="10" y2="22"/>
+          </svg>
+          <span>시간표 대시보드</span>
+        </button>
+
+        <button class="nav-tab" data-tab="substitute">
+          <span class="tab-badge-counter" id="tabSubCounter">2</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+          </svg>
+          <span>결보강 스마트 매칭</span>
+        </button>
+
+        <button class="nav-tab" data-tab="exam">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          <span>시험 감독 자동 배정</span>
+        </button>
+
+        <button class="nav-tab" data-tab="constraints">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span>시간표 제약 & AI 설정</span>
+        </button>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn btn-sm btn-outline" id="quickPrintBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          인쇄 / 내보내기
+        </button>
+        <button class="btn btn-sm btn-primary" id="validateScheduleBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          실시간 충돌 검사
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Content Body -->
+    <main class="app-main-content">
+
+      <!-- ==================================================== -->
+      <!-- TAB 1: 시간표 대시보드 (컴시간 데이터 뷰어) -->
+      <!-- ==================================================== -->
+      <section id="tab-timetable" class="tab-pane active">
+        <!-- Sub-filter Toolbar -->
+        <div class="content-toolbar">
+          <div class="view-mode-toggle">
+            <button class="btn-toggle active" data-view="class">학급별 시간표</button>
+            <button class="btn-toggle" data-view="teacher">교사별 시간표</button>
+            <button class="btn-toggle" data-view="facility">특별실/체육관</button>
+            <button class="btn-toggle" data-view="full">전체 종합 현황판</button>
+          </div>
+
+          <div class="filter-controls" id="timetableFilterControls">
+            <div class="select-group" id="classSelectGroup">
+              <label for="gradeSelect">학년:</label>
+              <select id="gradeSelect" class="form-select">
+                <option value="1">1학년</option>
+                <option value="2">2학년</option>
+                <option value="3" selected>3학년</option>
+              </select>
+              <label for="classSelect">반:</label>
+              <select id="classSelect" class="form-select">
+                <option value="1" selected>1반</option>
+                <option value="2">2반</option>
+                <option value="3">3반</option>
+                <option value="4">4반</option>
+              </select>
+            </div>
+
+            <div class="select-group hidden" id="teacherSelectGroup">
+              <label for="teacherSelect">선생님:</label>
+              <select id="teacherSelect" class="form-select">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div class="select-group hidden" id="facilitySelectGroup">
+              <label for="facilitySelect">특별실 구분:</label>
+              <select id="facilitySelect" class="form-select">
+                <option value="체육관">강당/체육관 (최대 4학급)</option>
+                <option value="과학실">제1/제2 과학실 (최대 2실)</option>
+                <option value="컴퓨터실">정보 컴퓨터실 (최대 1실)</option>
+                <option value="음악실">음악실 (최대 1실)</option>
+                <option value="미술실">미술실 (최대 1실)</option>
+              </select>
+            </div>
+
+            <div class="badge-status-cluster">
+              <span class="meta-tag">컴시간 캐시 동기화 완료</span>
+              <span class="meta-tag blue">주 35시간 표준제</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timetable View Area -->
+        <div class="timetable-wrapper">
+          <div class="timetable-header-banner">
+            <div>
+              <h2 id="timetableTitle" class="section-heading">3학년 1반 주간 정규 시간표</h2>
+              <p id="timetableDesc" class="section-desc">담임: 이영진 선생님 (수학) | 교실: 3층 본관 301호</p>
+            </div>
+            <div class="legend-bar">
+              <span class="legend-item"><span class="color-chip subject-lang"></span>국어/인문</span>
+              <span class="legend-item"><span class="color-chip subject-math"></span>수학</span>
+              <span class="legend-item"><span class="color-chip subject-sci"></span>과학/정보</span>
+              <span class="legend-item"><span class="color-chip subject-soc"></span>사회/역사</span>
+              <span class="legend-item"><span class="color-chip subject-pe"></span>체육/예술</span>
+              <span class="legend-item"><span class="color-chip subject-free"></span>공강/자율</span>
+            </div>
+          </div>
+
+          <!-- The Dynamic Timetable Grid -->
+          <div class="table-responsive">
+            <table class="timetable-grid" id="mainTimetableGrid">
+              <thead>
+                <tr>
+                  <th class="col-period">교시 / 시간</th>
+                  <th>월요일</th>
+                  <th>화요일</th>
+                  <th>수요일</th>
+                  <th>목요일</th>
+                  <th>금요일</th>
+                </tr>
+              </thead>
+              <tbody id="timetableGridBody">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- TAB 2: 결보강(수업 교체) 스마트 매칭 시스템 -->
+      <!-- ==================================================== -->
+      <section id="tab-substitute" class="tab-pane">
+        <div class="substitute-grid-layout">
+          <!-- Left: Substitute Request Form -->
+          <div class="card sub-form-card">
+            <div class="card-header">
+              <div class="card-header-icon bg-indigo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <line x1="19" y1="8" x2="19" y2="14"/>
+                  <line x1="22" y1="11" x2="16" y2="11"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="card-title">결강 등록 및 대체 탐색</h3>
+                <p class="card-subtitle">출장·연가 교사의 수업을 빠르고 공정하게 매칭합니다.</p>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <form id="substituteSearchForm" class="standard-form">
+                <div class="form-group">
+                  <label for="subAbsentTeacher">결강 교사 (대상 교사):</label>
+                  <select id="subAbsentTeacher" class="form-select" required>
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group col-6">
+                    <label for="subDay">요일 선택:</label>
+                    <select id="subDay" class="form-select">
+                      <option value="1">월요일</option>
+                      <option value="2" selected>화요일</option>
+                      <option value="3">수요일</option>
+                      <option value="4">목요일</option>
+                      <option value="5">금요일</option>
+                    </select>
+                  </div>
+                  <div class="form-group col-6">
+                    <label for="subPeriod">교시 선택:</label>
+                    <select id="subPeriod" class="form-select">
+                      <option value="1">1교시 (09:00~09:45)</option>
+                      <option value="2">2교시 (09:55~10:40)</option>
+                      <option value="3" selected>3교시 (10:50~11:35)</option>
+                      <option value="4">4교시 (11:45~12:30)</option>
+                      <option value="5">5교시 (13:20~14:05)</option>
+                      <option value="6">6교시 (14:15~15:00)</option>
+                      <option value="7">7교시 (15:10~15:55)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="subReason">결강 사유:</label>
+                  <select id="subReason" class="form-select">
+                    <option value="출장">관내/외 공무 출장</option>
+                    <option value="연가">개인 연가</option>
+                    <option value="병가">병가 / 특별 휴가</option>
+                    <option value="공무">학사 연수 및 시험 본부 근무</option>
+                  </select>
+                </div>
+
+                <!-- Target Class Preview Box -->
+                <div class="target-class-callout" id="targetClassCallout">
+                  <div class="callout-label">해당 시간 기존 수업 정보</div>
+                  <div class="callout-value" id="targetClassInfoText">
+                    <strong>3학년 2반</strong> [수학] - 본관 302호
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" id="btnRunSubMatching" class="btn btn-primary btn-block">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    대체 및 맞교환(Swap) 매칭 분석
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right: Smart Matching Results -->
+          <div class="sub-results-container">
+            <!-- Summary Stats for Matching -->
+            <div class="matching-summary-bar">
+              <div class="summary-pill">
+                <span class="label">동일 교시 공강 교사:</span>
+                <span class="val" id="freeTeacherCount">8명</span>
+              </div>
+              <div class="summary-pill success">
+                <span class="label">동일 학급 맞교환 슬롯:</span>
+                <span class="val" id="classSwapSlotCount">2건 발견</span>
+              </div>
+              <div class="summary-pill info">
+                <span class="label">추천 우선순위:</span>
+                <span class="val">수업시수 균형 & 동일 교과 우선</span>
+              </div>
+            </div>
+
+            <!-- Recommendation Section A: 맞교환(Swap) 추천 (Best Option in Schools) -->
+            <div class="results-block">
+              <div class="block-title-row">
+                <div class="title-with-badge">
+                  <span class="badge badge-success">최우선 추천</span>
+                  <h4>동일 학급 교과 맞교환 (Mutual Class Swap)</h4>
+                </div>
+                <span class="title-tip">학생의 결손 수업 없이 두 교사의 수업 일정을 맞바꿉니다.</span>
+              </div>
+
+              <div class="cards-grid" id="swapCardsGrid">
+                <!-- Dynamically populated swap cards -->
+              </div>
+            </div>
+
+            <!-- Recommendation Section B: 즉시 공강 대체 (Direct Substitute) -->
+            <div class="results-block">
+              <div class="block-title-row">
+                <div class="title-with-badge">
+                  <span class="badge badge-primary">대체 수업</span>
+                  <h4>즉시 보강 가능 공강 교사 (Direct Substitutes)</h4>
+                </div>
+                <span class="title-tip">동일 학년/교과군 및 주당 수업 시수가 적은 선생님 우선 정렬</span>
+              </div>
+
+              <div class="cards-grid" id="directSubCardsGrid">
+                <!-- Dynamically populated direct substitute cards -->
+              </div>
+            </div>
+
+            <!-- Section C: 최근 결보강 확정 이력 -->
+            <div class="results-block">
+              <div class="block-title-row">
+                <h4>최근 결보강 처리 현황 대장</h4>
+                <button class="btn btn-xs btn-outline" id="btnPrintSubLog">결보강 일지 인쇄</button>
+              </div>
+              <div class="table-responsive">
+                <table class="table-mini" id="subHistoryTable">
+                  <thead>
+                    <tr>
+                      <th>일자/교시</th>
+                      <th>결강 교사</th>
+                      <th>대상 학급</th>
+                      <th>대체/맞교환 교사</th>
+                      <th>유형</th>
+                      <th>상태</th>
+                    </tr>
+                  </thead>
+                  <tbody id="subHistoryTableBody">
+                    <!-- Dynamic -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- TAB 3: 맞춤형 시험 감독 시간표 자동 구성 엔진 -->
+      <!-- ==================================================== -->
+      <section id="tab-exam" class="tab-pane">
+        <div class="exam-engine-layout">
+          <!-- Top Control Panel: Configuration & Bell Schedule -->
+          <div class="card exam-config-card">
+            <div class="card-header">
+              <div class="card-header-icon bg-emerald">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <div>
+                <h3 class="card-title">시험 일정 및 변칙 벨타임(Bell Schedule) 설정</h3>
+                <p class="card-subtitle">학년별 부분 시험 및 감독 교사 자동 배정 알고리즘을 제어합니다.</p>
+              </div>
+              <div class="header-tools">
+                <button class="btn btn-sm btn-accent" id="btnAutoGenerateExam">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  </svg>
+                  시험 감독표 자동 생성
+                </button>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <div class="exam-form-grid">
+                <!-- Col 1: Exam Basic Info -->
+                <div class="config-col">
+                  <h4 class="col-heading">1. 시험 기본 정보</h4>
+                  <div class="form-group">
+                    <label>시험 명칭:</label>
+                    <input type="text" id="examNameInput" class="form-input" value="2026학년도 2학기 3학년 기말고사">
+                  </div>
+                  <div class="form-group">
+                    <label>시험 진행 학년 (부분 시험 지원):</label>
+                    <div class="checkbox-group-horizontal">
+                      <label class="custom-checkbox">
+                        <input type="checkbox" id="examGrade1">
+                        <span>1학년 (정상수업)</span>
+                      </label>
+                      <label class="custom-checkbox">
+                        <input type="checkbox" id="examGrade2">
+                        <span>2학년 (정상수업)</span>
+                      </label>
+                      <label class="custom-checkbox">
+                        <input type="checkbox" id="examGrade3" checked>
+                        <span>3학년 (시험 실시)</span>
+                      </label>
+                    </div>
+                    <p class="field-hint text-emerald">★ 3학년만 시험을 치르고 1,2학년은 정상 수업을 진행하는 '부분 시험 모드' 지원</p>
+                  </div>
+                </div>
+
+                <!-- Col 2: Bell Schedule (Irregular Timetable) -->
+                <div class="config-col">
+                  <h4 class="col-heading">2. 시험 기간 변칙 벨타임 (Bell Schedule)</h4>
+                  <div class="bell-schedule-box">
+                    <div class="bell-row">
+                      <span class="bell-period">1교시</span>
+                      <span class="bell-subject" id="bellSubj1">국어 (선다형+서술형)</span>
+                      <span class="bell-time">09:10 ~ 10:00 (50분)</span>
+                    </div>
+                    <div class="bell-row break">
+                      <span class="bell-period">휴식</span>
+                      <span class="bell-subject">시험지 교환 및 휴식</span>
+                      <span class="bell-time">10:00 ~ 10:20 (20분)</span>
+                    </div>
+                    <div class="bell-row">
+                      <span class="bell-period">2교시</span>
+                      <span class="bell-subject" id="bellSubj2">수학 (단답형+풀이형)</span>
+                      <span class="bell-time">10:20 ~ 11:10 (50분)</span>
+                    </div>
+                    <div class="bell-row break">
+                      <span class="bell-period">휴식</span>
+                      <span class="bell-subject">휴식 및 정숙 지도</span>
+                      <span class="bell-time">11:10 ~ 11:30 (20분)</span>
+                    </div>
+                    <div class="bell-row">
+                      <span class="bell-period">3교시</span>
+                      <span class="bell-subject" id="bellSubj3">과학 (수행평가 포함)</span>
+                      <span class="bell-time">11:30 ~ 12:20 (50분)</span>
+                    </div>
+                    <div class="bell-row lunch">
+                      <span class="bell-period">급식/종례</span>
+                      <span class="bell-subject">점심 식사 및 자기주도 학습</span>
+                      <span class="bell-time">12:20 ~ 13:20</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Col 3: Exclusion & Fairness Rules -->
+                <div class="config-col">
+                  <h4 class="col-heading">3. 배제 교사 및 공정성 제약 규칙</h4>
+                  <div class="rules-list-compact">
+                    <label class="custom-switch">
+                      <input type="checkbox" id="ruleExcludeHomeroom" checked>
+                      <span class="slider"></span>
+                      <span class="rule-label"><strong>담임교사 본인 학급 감독 배제</strong> (공정성 강화)</span>
+                    </label>
+
+                    <label class="custom-switch">
+                      <input type="checkbox" id="ruleExcludeSubjectTeacher" checked>
+                      <span class="slider"></span>
+                      <span class="rule-label"><strong>당해 시험 교과목 출제 교사 배제</strong> (복도/본부 대기)</span>
+                    </label>
+
+                    <label class="custom-switch">
+                      <input type="checkbox" id="ruleBalanceProctorCounts" checked>
+                      <span class="slider"></span>
+                      <span class="rule-label"><strong>감독 횟수 균등 분배</strong> (교사별 최대 편차 1회 이내)</span>
+                    </label>
+
+                    <div class="form-group mt-2">
+                      <label>감독 제외 교사 설정 (연가, 산모, 출장 등):</label>
+                      <div class="excluded-tags-container" id="excludedTeachersList">
+                        <!-- Populated tags -->
+                        <span class="badge badge-warning tag-removable">박보건 (보건실 상주) <button type="button">&times;</button></span>
+                        <span class="badge badge-warning tag-removable">정상담 (위클래스 상담) <button type="button">&times;</button></span>
+                        <span class="badge badge-warning tag-removable">강임산 (산전 육아기 단축) <button type="button">&times;</button></span>
+                      </div>
+                      <div class="add-exclude-box">
+                        <select id="selectTeacherToExclude" class="form-select form-select-sm">
+                          <!-- dynamic options -->
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline" id="btnAddExcludeTeacher">+ 제외 등록</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam Proctor Matrix View -->
+          <div class="card exam-matrix-card">
+            <div class="card-header">
+              <div class="matrix-title-group">
+                <h3 class="card-title">자동 배정된 시험 감독 및 잔류 학년 지도 종합 편성표</h3>
+                <span class="badge badge-primary">정·부감독 2인 1실 체제</span>
+              </div>
+              <div class="matrix-actions">
+                <button class="btn btn-sm btn-outline" id="btnPrintExamMatrix">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 6 2 18 2 18 9"/>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                    <rect x="6" y="14" width="12" height="8"/>
+                  </svg>
+                  감독 배치표 인쇄 (PDF)
+                </button>
+                <button class="btn btn-sm btn-outline" id="btnExportExamExcel">엑셀 다운로드</button>
+              </div>
+            </div>
+
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="exam-proctor-table" id="examProctorTable">
+                  <thead>
+                    <tr>
+                      <th class="sticky-col">구분 (시험실 / 학급)</th>
+                      <th>1교시 감독 (09:10~10:00)<br><small class="text-muted">국어 시험</small></th>
+                      <th>2교시 감독 (10:20~11:10)<br><small class="text-muted">수학 시험</small></th>
+                      <th>3교시 감독 (11:30~12:20)<br><small class="text-muted">과학 시험</small></th>
+                      <th>본부 및 복도 순회</th>
+                    </tr>
+                  </thead>
+                  <tbody id="examProctorTableBody">
+                    <!-- Dynamically generated rows -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Residual Grades Instruction Summary -->
+              <div class="residual-grades-banner">
+                <div class="banner-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </div>
+                <div class="banner-text">
+                  <h5>잔류 학년 (1·2학년 정상 수업) 교사 안배 현황</h5>
+                  <p id="residualTeachersStatus">1학년 4학급, 2학년 4학급은 컴시간 정규 수업 시간표에 따라 총 16명의 교사가 충돌 없이 교과 지도를 전담 중입니다. (감독 편성 시 정규 수업 교사는 시험 감독에서 자동 제외 처리됨)</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- TAB 4: 초기 시간표 편성 제약 조건 & AI 설정 인터페이스 -->
+      <!-- ==================================================== -->
+      <section id="tab-constraints" class="tab-pane">
+        <div class="constraints-layout">
+          <!-- Left: AI Natural Language Chat Assistant -->
+          <div class="card ai-chat-card">
+            <div class="card-header">
+              <div class="card-header-icon bg-purple">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="card-title">교무행정 AI 자연어 제약 조건 어시스턴트</h3>
+                <p class="card-subtitle">일상적인 자연어로 말씀하시면 시간표 제약 규칙으로 자동 번역합니다.</p>
+              </div>
+            </div>
+
+            <div class="chat-body" id="aiChatMessages">
+              <div class="chat-message bot">
+                <div class="avatar">AI</div>
+                <div class="bubble">
+                  안녕하세요, 교무부장님! 학교 시간표 편성 및 시설 제약 조건을 문장으로 편하게 입력해 주세요.<br><br>
+                  <strong>💡 추천 입력 예시:</strong><br>
+                  • "체육 수업은 동시에 4명까지만 겹치게 해줘"<br>
+                  • "김철수 선생님은 수요일 오후에 수업 없게 해줘"<br>
+                  • "과학실은 동시에 2학급 이하로 제한해줘"<br>
+                  • "박영희 선생님은 금요일 1교시 수업 배제해줘"
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-input-area">
+              <div class="quick-chip-prompts">
+                <button type="button" class="btn-chip" data-prompt="체육 수업은 동시에 4명까지만 겹치게 해줘">체육관 4학급 한도</button>
+                <button type="button" class="btn-chip" data-prompt="김철수 선생님은 수요일 오후(5~7교시)에 수업 없게 해줘">김철수 수요일 오후 공강</button>
+                <button type="button" class="btn-chip" data-prompt="과학실은 동시에 2학급 이하로만 배정해줘">과학실 2학급 제한</button>
+                <button type="button" class="btn-chip" data-prompt="이영진 선생님은 금요일 1~2교시 연속 수업을 피해줘">연속수업 제한</button>
+              </div>
+              <form id="aiPromptForm" class="chat-form">
+                <input type="text" id="aiPromptInput" class="chat-input" placeholder="시간표 제약 조건이나 교사 요구사항을 자연어로 입력하세요..." autocomplete="off">
+                <button type="submit" class="btn btn-primary" id="btnSendPrompt">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                  전송
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right: Active Rule Engine & Visual Dashboard -->
+          <div class="constraints-manager">
+            <!-- Facility Resource Constraints (Hard Constraints) -->
+            <div class="card rule-section-card">
+              <div class="card-header">
+                <div class="card-header-icon bg-amber">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="card-title">특별실 및 시설 자원 제약 (Resource Constraints)</h3>
+                  <p class="card-subtitle">동일 교시에 동시 사용 가능한 최대 학급 수를 물리적으로 제한합니다.</p>
+                </div>
+                <button class="btn btn-xs btn-outline" id="btnResetFacilityRules">기본값 복원</button>
+              </div>
+
+              <div class="card-body">
+                <div class="resource-cards-grid" id="resourceRulesGrid">
+                  <!-- Generated dynamically -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Teacher Custom Constraints (Soft & Hard Constraints) -->
+            <div class="card rule-section-card">
+              <div class="card-header">
+                <div class="card-header-icon bg-blue">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="card-title">교사별 개별 제약 규칙 (Teacher Requirements)</h3>
+                  <p class="card-subtitle">육아단축, 연구일, 대학원 출석, 특정 요일 집중 배치 제약 목록입니다.</p>
+                </div>
+                <button class="btn btn-xs btn-primary" id="btnOpenAddRuleModal">+ 직접 규칙 추가</button>
+              </div>
+
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="rules-table" id="teacherRulesTable">
+                    <thead>
+                      <tr>
+                        <th>대상 교사 / 과목</th>
+                        <th>제약 조건 유형</th>
+                        <th>적용 요일 및 교시</th>
+                        <th>제약 강도</th>
+                        <th>상태</th>
+                        <th>관리</th>
+                      </tr>
+                    </thead>
+                    <tbody id="teacherRulesTableBody">
+                      <!-- Populated dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Constraint Violation Detector -->
+            <div class="card violation-report-card">
+              <div class="card-header">
+                <h4 class="card-title">실시간 제약 조건 충돌 검사 리포트</h4>
+                <span class="badge badge-success" id="violationStatusBadge">충돌 0건 (정상)</span>
+              </div>
+              <div class="card-body">
+                <div id="violationListContainer" class="violation-list">
+                  <div class="empty-state">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                      <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <p>현재 등록된 모든 시설 한도 및 교사별 제약 조건이 시간표와 충돌 없이 완벽히 만족되고 있습니다.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Global Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Modal 1: Comsigan Live Sync Settings -->
+    <div id="syncModal" class="modal-backdrop">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>컴시간 알리미 연동 및 데이터 파서 설정</h3>
+            <button class="btn-close-modal" id="closeSyncModalBtn">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p class="modal-desc">
+              컴시간 알리미(Comsigan) 학교 코드를 통해 전교사/전교생 실시간 시간표를 불러오거나 내장 고성능 모의 데이터를 로드합니다.
+            </p>
+            <div class="form-group">
+              <label for="comsiganSchoolCode">컴시간 학교 코드 / 명칭:</label>
+              <div class="input-with-button">
+                <input type="text" id="comsiganSchoolCode" class="form-input" value="서울누리중학교" placeholder="학교명 검색 또는 고유코드">
+                <button type="button" class="btn btn-outline" id="btnSearchSchool">학교 검색</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="comsiganProxyUrl">컴시간 API 프록시 엔드포인트:</label>
+              <input type="text" id="comsiganProxyUrl" class="form-input" value="https://api.comsigan-proxy.internal/school/timetable" placeholder="CORS 우회 프록시 URL">
+              <span class="field-hint">브라우저 CORS 제약 우회를 위한 프록시 파서 엔드포인트</span>
+            </div>
+            <div class="comsigan-protocol-preview">
+              <h5>컴시간 프로토콜 데이터 패킷 구조 (Data Layer Schema):</h5>
+              <pre><code>{
+  "schoolCode": "72914",
+  "schoolName": "서울누리중학교",
+  "grades": 3,
+  "classesPerGrade": [4, 4, 4],
+  "teachers": 28,
+  "dailyPeriods": [7, 7, 7, 7, 6],
+  "matrix": "COMPRESSED_EUCKR_HEX_DECODED_ARRAY"
+}</code></pre>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="btnLoadMockData">기본 샘플 데이터 로드</button>
+            <button type="button" class="btn btn-primary" id="btnApplySyncSettings">컴시간 동기화 실행</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 2: Swap / Substitute Confirmation Slip -->
+    <div id="subConfirmModal" class="modal-backdrop">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>결보강(수업 교체) 확정 통지서 발급</h3>
+            <button class="btn-close-modal" id="closeSubConfirmModalBtn">&times;</button>
+          </div>
+          <div class="modal-body" id="subConfirmSlipBody">
+            <!-- Dynamic Slip Content -->
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="btnCancelSubModal">취소</button>
+            <button type="button" class="btn btn-secondary" id="btnPrintSlipModal">통지서 인쇄</button>
+            <button type="button" class="btn btn-primary" id="btnConfirmSubCommit">결보강 전산 확정 반영</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 3: Add Custom Rule -->
+    <div id="addRuleModal" class="modal-backdrop">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>교사 시간표 개별 제약 조건 추가</h3>
+            <button class="btn-close-modal" id="closeAddRuleModalBtn">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form id="newRuleForm">
+              <div class="form-group">
+                <label for="newRuleTeacher">선생님:</label>
+                <select id="newRuleTeacher" class="form-select" required></select>
+              </div>
+              <div class="form-group">
+                <label for="newRuleType">제약 유형:</label>
+                <select id="newRuleType" class="form-select">
+                  <option value="DAY_OFF">특정 요일 전일 공강 (연구일/대학원)</option>
+                  <option value="AFTERNOON_OFF">특정 요일 오후 공강 (5~7교시)</option>
+                  <option value="MORNING_OFF">특정 요일 오전 공강 (1~2교시)</option>
+                  <option value="MAX_CONTINUOUS">연속 수업 상한 제한 (최대 2연강)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="newRuleDay">적용 요일:</label>
+                <select id="newRuleDay" class="form-select">
+                  <option value="1">월요일</option>
+                  <option value="2">화요일</option>
+                  <option value="3">수요일</option>
+                  <option value="4">목요일</option>
+                  <option value="5">금요일</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="newRuleStrictness">제약 강도:</label>
+                <select id="newRuleStrictness" class="form-select">
+                  <option value="HARD">Hard Constraint (필수 충족)</option>
+                  <option value="SOFT">Soft Constraint (권장/선호)</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="btnCancelNewRule">취소</button>
+            <button type="button" class="btn btn-primary" id="btnSaveNewRule">규칙 저장</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
